@@ -1,0 +1,11 @@
+tqdm
+openai
+ebooklib
+srt
+zhipuai
+langchain
+langchain-community
+langsmith
+gradio
+pandas
+openpyxl
