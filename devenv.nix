@@ -17,6 +17,8 @@
     export ZHIPUAI_API_KEY=`cat ./secrets/glm_api_key.txt`
     export LANGSMITH_API_KEY=`cat ./secrets/langsmith_api_key.txt`
   '';
+
+  languages.javascript.enable = true;
     
 
   languages.python = {
