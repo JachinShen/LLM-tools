@@ -2,6 +2,7 @@
 
 {
   packages = [
+    pkgs.yt-dlp
     pkgs.ffmpeg-headless
   ];
 
@@ -19,7 +20,6 @@
   '';
 
   languages.javascript.enable = true;
-    
 
   languages.python = {
     enable = true;
