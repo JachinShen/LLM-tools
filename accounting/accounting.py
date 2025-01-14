@@ -3,8 +3,7 @@ import gradio as gr
 import pandas as pd
 
 from langchain_community.chat_models import ChatZhipuAI
-from langchain_core.messages import AIMessage, HumanMessage, SystemMessage
-from langchain_core.prompts import PromptTemplate
+from langchain_core.prompts import ChatPromptTemplate, SystemMessagePromptTemplate, HumanMessagePromptTemplate
 from langchain_core.output_parsers.json import JsonOutputParser
 from langsmith import traceable
 from pydantic import BaseModel, Field
@@ -22,21 +21,29 @@ class Ledger(BaseModel):
 
 parser = JsonOutputParser(pydantic_object=Ledger)
 chat = ChatZhipuAI(model="glm-4-flash", temperature=0.5)
+system_message = SystemMessagePromptTemplate.from_template(
+    "你是一个专业会计师，能够将事件精确转换为借贷记账法的会计分录。请确保每个分录都正确地反映了交易的借方和贷方。")
+human_message = HumanMessagePromptTemplate.from_template(
+    "历史账目如下：\n{ledger}\n{format_instructions}\n{query}\n",
+    input_variables=["query", "ledger"],
+    partial_variables={"format_instructions": parser.get_format_instructions()}
+)
 
 def ask_llm(user_input, ledger_df):
     # 获取最新的10条账目
     latest_ledger = ledger_df.tail(10)
     ledger_str = latest_ledger.to_string(index=False)
-    prompt = PromptTemplate(
-        template="你是一个专业会计师，能够将事件精确转换为借贷记账法的会计分录。请确保每个分录都正确地反映了交易的借方和贷方。历史账目如下：\n{ledger}\n{format_instructions}\n{query}\n",
-        input_variables=["query"],
-        partial_variables={"format_instructions": parser.get_format_instructions(), "ledger": ledger_str},
+    prompt = ChatPromptTemplate(
+        messages = [
+            system_message,
+            human_message
+        ],
     )
 
     chain = prompt | chat | parser
 
     # 获取LLM的响应
-    response = chain.invoke({"query": user_input})
+    response = chain.invoke({"query": user_input, "ledger": ledger_str})
     return response
 
 
